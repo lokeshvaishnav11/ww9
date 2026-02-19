@@ -218,7 +218,7 @@ export const AvailableToBackLay = React.memo(({ selections, market, runner }: Pr
 
     console.log(back,"Lokesh")
 
-    if ((back.price *100 -100) > 1 && back.size && userState.user.role === RoleType.user) {
+    if ((back.price *100 -100) >= 1 && back.size && userState.user.role === RoleType.user  || !isBack &&(back.price *100 -100) >=1 && back.size && userState.user.role === RoleType.user) {
       dispatch(
         betPopup({
           isOpen: true,
@@ -265,7 +265,7 @@ export const AvailableToBackLay = React.memo(({ selections, market, runner }: Pr
           <span className="odd d-block">
             {(() => {
               const odds = back.price * 100 - 100;
-              if (allowSuspension && odds > 100 || allowSuspension && odds ==0) return "0";
+              if (allowSuspension && (odds > 100 || odds ==1)|| allowSuspension && odds ==0) return "0";
               return odds.toFixed(0) || "-";
             })()}
           </span>

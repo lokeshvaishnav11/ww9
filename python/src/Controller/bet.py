@@ -126,7 +126,9 @@ def validate_bet(payload, userInfo, balance, settings, matchInfo):
         match_datetime = datetime.strptime(
             match_datetime_str, '%Y-%m-%d %H:%M:%S')
         # print(current_datetime < match_datetime)
-        if payload['marketName'] == "Match Odds" and current_datetime < match_datetime:
+        print(current_datetime,match_datetime,current_datetime<match_datetime,"llllll")
+
+        if payload['marketName'] in ["Match Odds", "Bookmaker"] and current_datetime < match_datetime:
             return {"message": 'failed', "notification": f"Match is not in play"}
         if (current_datetime < match_datetime):
             # print("The match is in the future.")
@@ -641,7 +643,8 @@ def placebet(betObj, userInfo):
                         "status": 'pending',
                         "bet_on": BetOn['CASINO'],
                     }))
-                    if matchInfo['status'] == 0:
+                    print(matchInfo['status'],current_datetime,match_datetime,current_datetime<match_datetime,"llllll")
+                    if matchInfo['status'] == 0 or current_datetime < match_datetime:
                         return error({}, "Match Is Not In Play")
 
                     markets = matchInfo
