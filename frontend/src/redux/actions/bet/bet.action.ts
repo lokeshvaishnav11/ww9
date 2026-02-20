@@ -13,7 +13,9 @@ export const getPlaceBetAction = createAsyncThunk(
   async (data: IBet, { rejectWithValue, dispatch }) => {
     try {
       // Frontend delay of 2 seconds
+      if(data.betOn != "CASINO" && data.betOn != "MATKA"){
       await delay(1000)
+      }
 
       console.log(data, "check matka bet dtata")
       let res:any
