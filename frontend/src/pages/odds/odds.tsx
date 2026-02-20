@@ -189,7 +189,7 @@ const Odds = () => {
             position: "absolute",
             top: "15px",
             right: "8px",
-            zIndex: 10,
+            zIndex: 1,
             cursor: "pointer",
             background: "#000",
             color: "#fff",
