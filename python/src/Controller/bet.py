@@ -415,11 +415,11 @@ def placebet(betObj, userInfo):
             
             if match_id in [23, 15] and int(selectionId) in [11, 12, 13, 14]:
                 loss = float(payload['exposure']) * 5
-            if match_id in [9]:
-                if isBack is False: 
-                   loss = -payload['stack'] * (odds/100)
+            # if match_id in [9]:
+            #     if isBack is False: -m
+            #        loss = -payload['stack'] * (odds/100)
             print(loss)
-            print("losslosslossloss")
+            print("losslosslossloss") 
             ipAddress = payload['ipAddress']
             volume = float(payload.get("volume", 0))
             matchName = payload['matchName']
