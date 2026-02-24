@@ -639,8 +639,9 @@ class DealersController extends ApiController_1.ApiController {
         return __awaiter(this, void 0, void 0, function* () {
             const { username, page, search, type, status } = req.query;
             console.log(req.query, "req.query");
-            const pageNo = page ? page : '1';
-            const pageLimit = 999999;
+            // const pageNo = page ? (page as string) : '1'
+            const pageNo = page ? parseInt(page) : null;
+            const pageLimit = pageNo ? 20 : 999999;
             const currentUser = req.user;
             console.log(currentUser, "curen");
             const select = {
@@ -741,68 +742,152 @@ class DealersController extends ApiController_1.ApiController {
                 }
             ];
             let filters = [];
+            // if (username && search !== 'true') {
+            //   const user: IUserModel | null = await this.getUser(username)
+            //   if (!user) {
+            //     return res.status(404).json({ message: 'User not found' })
+            //   }
+            //   filters = paginationPipeLine(
+            //     pageNo,
+            //     [
+            //       {
+            //         $match: {
+            //           parentStr: { $elemMatch: { $eq: Types.ObjectId(user._id) } }
+            //         }
+            //       },
+            //       ...aggregateFilter,
+            //     ],
+            //     pageLimit,
+            //   )
+            // }else if (type) {
+            //   //if (username) const user: IUserModel | null = await this.getUser(username)
+            //   filters = paginationPipeLine(
+            //     pageNo || 1,
+            //     [
+            //       {
+            //         $match: {
+            //           role: type,
+            //           parentStr: { $elemMatch: { $eq: Types.ObjectId(currentUser._id) } },
+            //         },
+            //       },
+            //       ...aggregateFilter,
+            //     ],
+            //     pageLimit,
+            //   )
+            // } else if (username && search === 'true') {
+            //   filters = paginationPipeLine(
+            //     pageNo,
+            //     [
+            //       {
+            //         $match: {
+            //           username: new RegExp(username as string, 'i'),
+            //           parentStr: { $elemMatch: { $eq: Types.ObjectId(currentUser._id) } },
+            //         },
+            //       },
+            //       ...aggregateFilter,
+            //     ],
+            //     pageLimit,
+            //   )
+            // } else {
+            //   const { _id, role }: any = req?.user
+            //   if (status) {
+            //     filters = paginationPipeLine(
+            //       pageNo,
+            //       [
+            //         {
+            //           $match: {
+            //             parentId: Types.ObjectId(_id),
+            //             isLogin: status === 'true',
+            //           },
+            //         },
+            //         ...aggregateFilter,
+            //       ],
+            //       pageLimit,
+            //     )
+            //   } else {
+            //     if (role !== 'admin') {
+            //       filters = paginationPipeLine(
+            //         pageNo,
+            //         [{ $match: { parentId: Types.ObjectId(_id) } }, ...aggregateFilter],
+            //         pageLimit,
+            //       )
+            //     } else {
+            //       console.log(_id)
+            //       filters = paginationPipeLine(
+            //         pageNo,
+            //         [{ $match: { _id: Types.ObjectId(_id) } }, ...aggregateFilter],
+            //         pageLimit,
+            //       )
+            //     }
+            //   }
+            // }
+            const buildPipeline = (matchCondition) => {
+                const pipeline = [
+                    { $match: matchCondition },
+                    ...aggregateFilter
+                ];
+                // ✅ Pagination ONLY when type exists
+                if (pageNo && type) {
+                    return (0, aggregation_pipeline_pagination_1.paginationPipeLine)(pageNo, pipeline, pageLimit);
+                }
+                return pipeline;
+            };
+            // ✅ CASE 1
             if (username && search !== 'true') {
                 const user = yield this.getUser(username);
                 if (!user) {
                     return res.status(404).json({ message: 'User not found' });
                 }
-                filters = (0, aggregation_pipeline_pagination_1.paginationPipeLine)(pageNo, [
-                    {
-                        $match: {
-                            parentStr: { $elemMatch: { $eq: mongoose_2.Types.ObjectId(user._id) } }
-                        }
-                    },
-                    ...aggregateFilter,
-                ], pageLimit);
+                const matchCondition = {
+                    parentStr: { $elemMatch: { $eq: mongoose_2.Types.ObjectId(user._id) } }
+                };
+                // 👇 YEH ADD KARO
+                if (type) {
+                    matchCondition.role = type;
+                }
+                filters = buildPipeline(matchCondition);
             }
-            else if (search === 'true' && type) {
-                //if (username) const user: IUserModel | null = await this.getUser(username)
-                filters = (0, aggregation_pipeline_pagination_1.paginationPipeLine)(pageNo, [
-                    {
-                        $match: {
-                            role: type,
-                            parentStr: { $elemMatch: { $eq: mongoose_2.Types.ObjectId(currentUser._id) } },
-                        },
-                    },
-                    ...aggregateFilter,
-                ], pageLimit);
+            // ✅ CASE 2 (TYPE FIXED)
+            else if (type) {
+                filters = buildPipeline({
+                    role: type,
+                    parentStr: { $elemMatch: { $eq: mongoose_2.Types.ObjectId(currentUser._id) } }
+                    // parentId: Types.ObjectId(currentUser._id)
+                });
             }
+            // ✅ CASE 3
             else if (username && search === 'true') {
-                filters = (0, aggregation_pipeline_pagination_1.paginationPipeLine)(pageNo, [
-                    {
-                        $match: {
-                            username: new RegExp(username, 'i'),
-                            parentStr: { $elemMatch: { $eq: mongoose_2.Types.ObjectId(currentUser._id) } },
-                        },
-                    },
-                    ...aggregateFilter,
-                ], pageLimit);
+                filters = buildPipeline({
+                    username: new RegExp(username, 'i'),
+                    parentStr: { $elemMatch: { $eq: mongoose_2.Types.ObjectId(currentUser._id) } }
+                });
             }
             else {
                 const { _id, role } = req === null || req === void 0 ? void 0 : req.user;
                 if (status) {
-                    filters = (0, aggregation_pipeline_pagination_1.paginationPipeLine)(pageNo, [
-                        {
-                            $match: {
-                                parentId: mongoose_2.Types.ObjectId(_id),
-                                isLogin: status === 'true',
-                            },
-                        },
-                        ...aggregateFilter,
-                    ], pageLimit);
+                    filters = buildPipeline({
+                        parentId: mongoose_2.Types.ObjectId(_id),
+                        isLogin: status === 'true'
+                    });
                 }
                 else {
                     if (role !== 'admin') {
-                        filters = (0, aggregation_pipeline_pagination_1.paginationPipeLine)(pageNo, [{ $match: { parentId: mongoose_2.Types.ObjectId(_id) } }, ...aggregateFilter], pageLimit);
+                        filters = buildPipeline({
+                            parentId: mongoose_2.Types.ObjectId(_id)
+                        });
                     }
                     else {
-                        console.log(_id);
-                        filters = (0, aggregation_pipeline_pagination_1.paginationPipeLine)(pageNo, [{ $match: { _id: mongoose_2.Types.ObjectId(_id) } }, ...aggregateFilter], pageLimit);
+                        filters = buildPipeline({
+                            _id: mongoose_2.Types.ObjectId(_id)
+                        });
                     }
                 }
             }
             const users = yield User_1.User.aggregate(filters);
-            return this.success(res, Object.assign({}, users[0]));
+            if (pageNo && type) {
+                return this.success(res, Object.assign({}, users[0]));
+            }
+            return this.success(res, { items: users });
         });
     }
     getUserList2(req, res) {
