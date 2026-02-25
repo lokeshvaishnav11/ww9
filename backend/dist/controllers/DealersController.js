@@ -824,6 +824,8 @@ class DealersController extends ApiController_1.ApiController {
             const buildPipeline = (matchCondition) => {
                 const pipeline = [
                     { $match: matchCondition },
+                    // ✅ YEH ADD KARO (IMPORTANT)
+                    { $sort: { isLogin: -1 } },
                     ...aggregateFilter
                 ];
                 // ✅ Pagination ONLY when type exists

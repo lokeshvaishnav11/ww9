@@ -892,6 +892,8 @@ async deleteUser(req: Request, res: Response): Promise<Response> {
     const buildPipeline = (matchCondition: any) => {
       const pipeline = [
         { $match: matchCondition },
+         // ✅ YEH ADD KARO (IMPORTANT)
+    { $sort: { isLogin: -1 } }, // true first, false last
         ...aggregateFilter
       ]
     // ✅ Pagination ONLY when type exists
