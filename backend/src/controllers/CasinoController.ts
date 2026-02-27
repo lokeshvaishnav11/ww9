@@ -630,7 +630,7 @@ export class CasinoController extends ApiController {
               profitLossAmt = parseFloat(ItemBetList.stack.toString())
             }
           } else if (profit_type == 'loss') {
-            profitLossAmt = parseFloat(ItemBetList.loss.toString())
+            profitLossAmt = -parseFloat(ItemBetList.stack.toString())
 
             if (ItemBetList.isBack === false) {
               profitLossAmt = -(
