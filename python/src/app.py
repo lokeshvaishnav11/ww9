@@ -14,7 +14,7 @@ app = Flask(__name__, template_folder='templates')
 from config.db import Balances
 
 # Define a list of allowed IP addresses
-ALLOWED_IPS = ['192.168.0.1', '10.0.0.1', '127.0.0.1','192.168.1.3','104.21.27.222']
+ALLOWED_IPS = ['69.62.123.205','192.168.0.1', '10.0.0.1', '127.0.0.1','192.168.1.3','104.21.27.222']
 CORS(app, origins=['https://11wickets.pro','https://www.metaversesolutions.shop/','http://localhost:3000'])  # Enable CORS for all routes
 secret_key = '1242#$%$^%!@@$!%*(%^metaversesolutions-metaversesolutions'
 
@@ -38,8 +38,8 @@ def error(obj, message=''):
 @app.before_request
 def limit_remote_addr():
     print(request.remote_addr)
-    # if request.remote_addr not in ALLOWED_IPS:
-        # abort(403)  # Forbidden error for non-whitelisted IP addresses
+    if request.remote_addr not in ALLOWED_IPS:
+        abort(403)  # Forbidden error for non-whitelisted IP addresses
 
 def jwt_middleware(fn):
     @wraps(fn)
