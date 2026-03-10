@@ -2063,7 +2063,13 @@ def placebet(betObj, userInfo):
                     # Lay bet
                     profit = stake
                     loss = -(odds - 1) * stake
-
+            else:
+                if isBack:
+                    profit = (volume * stake)/100
+                    loss = -stake
+                else:
+                    profit = stake
+                    loss = -(volume * stake)/100
             if(market_name=='Match Odds'):
                 delay(4000)
             
@@ -2168,10 +2174,11 @@ def placebet(betObj, userInfo):
                 if (exposer != 'failed'):
                     available_balance = round(balance.get("balance", 0))
                     casinoexposer = balance.get("casinoexposer", 0)
+                    matkaexposer = balance.get("matkaexposer", 0)
                     comm = balance.get("commision",0)
                     print(available_balance)
                     print((float(exposer) + float(casinoexposer)))
-                    if ((available_balance - (float(exposer) + float(casinoexposer))) < 0):
+                    if ((available_balance - (float(exposer) + float(casinoexposer)+float(matkaexposer))) < 0):
                         data_to_serialize_ = {"message": "Max limit Exceed"}
                         json_data = json.dumps(
                         data_to_serialize_, cls=JSONEncoderWithObjectId)
@@ -2250,9 +2257,10 @@ def placebet(betObj, userInfo):
                 #print("casinoexposer")
                 if casinoexposer != 'failed':
                     exposer = balance.get("exposer", 0)
+                    matkaexposer = balance.get("matkaexposer", 0)
                     available_balance = balance.get("balance", 0)
                     comm = balance.get("commision",0)
-                    if (available_balance - (float(exposer) + float(casinoexposer))  < 0):
+                    if (available_balance - (float(exposer) + float(casinoexposer) +float(matkaexposer))  < 0):
                         return json.dumps(error({}, "Max limit Exceed 2"), cls=JSONEncoderWithObjectId)
                     betInsert = Bet.insert_one(jsonObj)
                     inserted_id = betInsert.inserted_id
