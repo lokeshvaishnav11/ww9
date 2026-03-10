@@ -2063,13 +2063,14 @@ def placebet(betObj, userInfo):
                     # Lay bet
                     profit = stake
                     loss = -(odds - 1) * stake
-            # else:
-            #     if isBack:
-            #         profit = (volume * stake)/100
-            #         loss = -stake
-            #     else:
-            #         profit = stake
-            #         loss = -(volume * stake)/100
+            else:
+                volume = float(payload['volume'])
+                if isBack:
+                    profit = (volume * stake)/100
+                    loss = -stake
+                else:
+                    profit = stake
+                    loss = -(volume * stake)/100
             if(market_name=='Match Odds'):
                 delay(4000)
             
