@@ -1822,7 +1822,7 @@ export class BetController extends ApiController {
     try {
       const user: any = req.user;
 
-      const { mid } = req.query;
+    const mid = req.query.mid ? Number(req.query.mid) : null;
 
       // 🔹 Get child users of this user
       const usersWithThisAsParent = await User.find({
