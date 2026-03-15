@@ -1822,6 +1822,8 @@ export class BetController extends ApiController {
     try {
       const user: any = req.user;
 
+      const { mid } = req.query;
+
       // 🔹 Get child users of this user
       const usersWithThisAsParent = await User.find({
         parentStr: ObjectId(user._id),
@@ -1886,6 +1888,8 @@ export class BetController extends ApiController {
               userId: { $in: userIds },
               bet_on: { $ne: "CASINO" },
               status: { $ne: "deleted" },
+              ...(mid ? { matchId: mid } : {})
+
             },
           },
 
@@ -1959,7 +1963,7 @@ export class BetController extends ApiController {
           }
         ]),
 
-        Match.find({}).lean(),
+      Match.find(mid ? { matchId: mid } : {}).lean(),
         User.find({ parentId: user._id }).lean(),
       ]);
 

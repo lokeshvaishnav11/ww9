@@ -1,4 +1,7 @@
 /node_modules
+dist
+/dist
+dist/
 # Ignore all environment files
 .env
 .env.*
@@ -16,3 +19,5 @@ npm-debug.log*
 yarn-error.log*
 
 /dist
+dist
+dist/

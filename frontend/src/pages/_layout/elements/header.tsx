@@ -212,11 +212,9 @@ const [userAlldata, setUserAlldata] = React.useState<{ [key: string]: any }>({})
                 </p>
 
                 <div className="mb-1">
-                  <span>Coins: </span>
-                  {/* <b>{(balance.balance?.toFixed(2) + balance.commision?.toFixed(2)) - balance.exposer?.toFixed(2)}</b> */}
-                  <b>{((balance.balance || 0) - (balance.exposer || 0)).toFixed(2)}</b>
-
-                </div>
+  <span>Coins: </span>
+  <b>{Math.max(0, (balance.balance || 0) - (balance.exposer || 0)).toFixed(2)}</b>
+</div>
 
                 {!selectHideBal.exposer && (
                   <div>
