@@ -1791,7 +1791,7 @@ export class DealersController extends ApiController {
 
       const isLoginChanged =
         typeof isUserActive !== "undefined" &&
-        currentUserData.isLogin !== isUserActive;
+        user.isLogin !== isUserActive;
       // Find all users affected (main user + child users)
       const usersToUpdate = await User.find({
         $or: [
