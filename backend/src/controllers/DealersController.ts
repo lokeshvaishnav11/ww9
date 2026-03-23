@@ -1671,7 +1671,88 @@ export class DealersController extends ApiController {
   // }
 
 
-  async updateUserStatus(req: Request, res: Response): Promise<Response> {
+  // async updateUserStatus(req: Request, res: Response): Promise<Response> {
+  //   try {
+  //     const {
+  //       username,
+  //       isUserActive,
+  //       isUserBetActive,
+  //       isUserBet2Active,
+  //       isUserBet3Active,
+  //       transactionPassword,
+  //       single,
+  //     } = req.body;
+
+  //     const currentUser: any = req.user;
+  //     console.log(req.body, "Request body");
+
+  //     const currentUserData: any = await User.findOne({ _id: currentUser._id });
+
+  //     if (!single) {
+  //       // Uncomment this if you want to validate transaction password
+  //       // const isMatch = await currentUserData.compareTxnPassword(transactionPassword);
+  //       // if (!isMatch) {
+  //       //   return this.fail(res, 'Transaction Password not matched');
+  //       // }
+  //     }
+
+  //     const user = await User.findOne({ username });
+  //     if (!user) {
+  //       return this.fail(res, 'User does not exist!');
+
+  //     }
+
+  //     console.log(currentUserData, "isLogin")
+  //     if (!currentUserData.isLogin) {
+  //       return this.fail(res, 'You cannot change status ! contact upline');
+
+  //     }
+  //     // Find all users affected (main user + child users)
+  //     const usersToUpdate = await User.find({
+  //       $or: [
+  //         { _id: user._id },
+  //         { parentStr: { $elemMatch: { $eq: Types.ObjectId(user._id) } } },
+  //       ],
+  //     });
+
+  //     if (usersToUpdate.length > 0) {
+  //       // Update all matched users in the database
+  //       await User.updateMany(
+  //         { _id: { $in: usersToUpdate.map(u => u._id) } },
+  //         {
+  //           isLogin: isUserActive,
+  //           betLock: isUserBetActive,
+  //           betLock2: isUserBet2Active,
+  //           betLock3: isUserBet3Active,
+
+  //         }
+  //       );
+
+  //       // Logout each affected user
+  //       usersToUpdate.forEach(u => {
+  //         UserSocket.logout({
+  //           role: u.role,
+  //           sessionId: '123', // You may want to replace this with the real sessionId
+  //           _id: u._id,
+  //         });
+  //       });
+
+  //       // Create operation log
+  //       await Operation.create({
+  //         username: username,
+  //         operation: "Status Change",
+  //         doneBy: `${currentUser.username} (${currentUserData.code})`,
+  //         description: `OLD status Disable, NEW status Active`,
+  //       });
+  //     }
+
+  //     return this.success(res, {}, 'User status updated');
+  //   } catch (e: any) {
+  //     return this.fail(res, e);
+  //   }
+  // }
+
+    async updateUserStatus(req: Request, res: Response): Promise<Response> {
     try {
       const {
         username,
@@ -1707,6 +1788,10 @@ export class DealersController extends ApiController {
         return this.fail(res, 'You cannot change status ! contact upline');
 
       }
+
+      const isLoginChanged =
+        typeof isUserActive !== "undefined" &&
+        currentUserData.isLogin !== isUserActive;
       // Find all users affected (main user + child users)
       const usersToUpdate = await User.find({
         $or: [
@@ -1717,25 +1802,31 @@ export class DealersController extends ApiController {
 
       if (usersToUpdate.length > 0) {
         // Update all matched users in the database
+        const updateData: any = {
+          betLock: isUserBetActive,
+          betLock2: isUserBet2Active,
+          betLock3: isUserBet3Active,
+        };
+
+        // 🔴 isLogin sirf tab update kare jab change ho
+        if (isLoginChanged) {
+          updateData.isLogin = isUserActive;
+        }
         await User.updateMany(
           { _id: { $in: usersToUpdate.map(u => u._id) } },
-          {
-            isLogin: isUserActive,
-            betLock: isUserBetActive,
-            betLock2: isUserBet2Active,
-            betLock3: isUserBet3Active,
-
-          }
+          updateData
         );
 
         // Logout each affected user
-        usersToUpdate.forEach(u => {
-          UserSocket.logout({
-            role: u.role,
-            sessionId: '123', // You may want to replace this with the real sessionId
-            _id: u._id,
+        if (isLoginChanged) {
+          usersToUpdate.forEach(u => {
+            UserSocket.logout({
+              role: u.role,
+              sessionId: '123',
+              _id: u._id,
+            });
           });
-        });
+        }
 
         // Create operation log
         await Operation.create({
