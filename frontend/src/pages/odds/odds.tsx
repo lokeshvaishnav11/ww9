@@ -265,7 +265,7 @@ const Odds = () => {
               <iframe
                 style={{ width: "100%", height: "250px" }}
                 // src={`${tvUrl}${currentMatch?.matchId}`}
-                //src={`https://livestream-v3-iframe.akamaized.uk/?eventid=${currentMatch?.matchId}`}
+             
                 src={`https://stream-s-43.xink.site/sports-stream?btid=${currentMatch?.matchId}`}
               ></iframe>
             </div>
