@@ -821,6 +821,43 @@ placeMatkabet = async (req: Request, res: Response): Promise<Response> => {
     }
   };
 
+
+   activeFanciesnew = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const { matchId, gtype }: any = req.query;
+      if (!matchId) return this.fail(res, "matchId is required field");
+
+      // Get all selectionIds of fancy bets for this match
+      const bets = await Bet.find({ matchId, bet_on: BetOn.FANCY }).select({ selectionId: 1 });
+      const allBets: Record<string, boolean> = {};
+      bets.forEach(bet => {
+        allBets[`${bet.selectionId}`] = true;
+      });
+
+      let fancy;
+
+      if (gtype === "session") {
+        // In case of "session", fetch all types of fancies for the match
+        fancy = await Fancy.find({ matchId }).sort({ active: -1 }).lean();
+      } else {
+        // For other gtypes, filter strictly by gtype
+        fancy = await Fancy.find({ matchId, gtype }).sort({ active: -1 }).lean();
+      }
+
+      // Mark fancies where user has bets
+      fancy = fancy
+        .map((f: any) => {
+          f.bet = !!allBets[f.marketId];
+          return f;
+        })
+        .sort((a, b) => Number(b.bet) - Number(a.bet));
+
+      return this.success(res, fancy);
+    } catch (e: any) {
+      return this.fail(res, e);
+    }
+  };
+
   suspendFancy = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { marketId, matchId, type }: any = req.query;
@@ -1421,6 +1458,150 @@ placeMatkabet = async (req: Request, res: Response): Promise<Response> => {
 
 
   declarefancyresult = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    try {
+      const { marketId, matchId, result }: any = req.query;
+      const userbet: any = await Bet.aggregate([
+        {
+          $match: {
+            status: "pending",
+            bet_on: BetOn.FANCY,
+            marketId: marketId,
+            matchId: parseInt(matchId),
+          },
+        },
+        {
+          $group: {
+            _id: "$userId",
+            allBets: { $push: "$$ROOT" },
+          },
+        },
+      ]);
+      let userIdList: any = [];
+      const parentIdList: any = [];
+      const declare_result = userbet.map(async (Item: any) => {
+        let allbets: any = Item.allBets;
+        const settle_single = allbets.map(
+          async (ItemBetList: any, indexBetList: number) => {
+            let profit_type: string = "loss";
+            profit_type =
+              ItemBetList.isBack == false &&
+                parseInt(result) < parseInt(ItemBetList.odds)
+                ? "profit"
+                : profit_type;
+            profit_type =
+              ItemBetList.isBack == true &&
+                parseInt(result) >= parseInt(ItemBetList.odds)
+                ? "profit"
+                : profit_type;
+            let profitLossAmt: number = 0;
+            if (ItemBetList.gtype === "fancy1") {
+              profit_type =
+                ItemBetList.isBack == true && parseInt(result) == 1
+                  ? "profit"
+                  : profit_type;
+
+              profit_type =
+                ItemBetList.isBack == false && parseInt(result) == 0
+                  ? "profit"
+                  : profit_type;
+            }
+            if (profit_type == "profit") {
+              if (ItemBetList.gtype === "fancy1") {
+                profitLossAmt = ItemBetList.isBack
+                  ? ItemBetList.odds * ItemBetList.stack - ItemBetList.stack
+                  : ItemBetList.stack;
+              } else {
+                profitLossAmt = ItemBetList.isBack
+                  ? (parseFloat(ItemBetList.volume) *
+                    parseFloat(ItemBetList.stack)) /
+                  100
+                  : ItemBetList.stack;
+              }
+            } else if (profit_type == "loss") {
+              if (ItemBetList.gtype === "fancy1") {
+                profitLossAmt = ItemBetList.isBack
+                  ? -ItemBetList.stack
+                  : -1 *
+                  (ItemBetList.odds * ItemBetList.stack - ItemBetList.stack);
+              } else {
+                profitLossAmt = ItemBetList.isBack
+                  ? -ItemBetList.stack
+                  : -(
+                    parseFloat(ItemBetList.volume) *
+                    parseFloat(ItemBetList.stack)
+                  ) / 100;
+              }
+            }
+            let type_string: string = ItemBetList.isBack ? "Yes" : "No";
+            if (result == -1) {
+              profitLossAmt = 0;
+            }
+            let narration: string =
+              ItemBetList.matchName +
+              " / " +
+              ItemBetList.selectionName +
+              " / " +
+              type_string +
+              " / " +
+              (result == -1 ? "Abandoned" : result);
+            await this.addprofitlosstouser({
+              userId: ObjectId(Item._id),
+              bet_id: ObjectId(ItemBetList._id),
+              profit_loss: profitLossAmt,
+              matchId,
+              narration,
+              sportsType: ItemBetList.sportId,
+              selectionId: ItemBetList.selectionId,
+              sportId: ItemBetList.sportId,
+            });
+            if (result != -1) {
+              await this.cal9xbro(Item._id, profitLossAmt, narration, matchId, ItemBetList._id, BetOn.FANCY)
+            }
+            if (indexBetList == 0) {
+              ItemBetList.ratioStr.allRatio.map((ItemParentStr: any) => {
+                parentIdList.push(ItemParentStr.parent);
+                userIdList.push(ObjectId(ItemParentStr.parent));
+              });
+            }
+            UserSocket.betDelete({
+              betId: ItemBetList._id,
+              userId: ItemBetList.userId,
+            });
+          }
+        );
+        await Promise.all(settle_single);
+        userIdList.push(ObjectId(Item._id));
+      });
+      await Promise.all(declare_result);
+      await Bet.updateMany(
+        {
+          userId: { $in: userIdList },
+          matchId: matchId,
+          selectionId: marketId,
+          bet_on: BetOn.FANCY,
+          status: "pending",
+        },
+        { $set: { status: "completed" } }
+      );
+      const unique = [...new Set(userIdList)];
+      if (unique.length > 0) {
+        await this.updateUserAccountStatement(unique, parentIdList);
+      }
+      await Fancy.updateOne(
+        { matchId: matchId, marketId: marketId },
+        { $set: { result: result } }
+      );
+      return this.success(res, userbet, "");
+    } catch (e: any) {
+      return this.fail(res, e);
+    }
+  };
+
+
+   declarefancyresultnew = async (
     req: Request,
     res: Response
   ): Promise<Response> => {
