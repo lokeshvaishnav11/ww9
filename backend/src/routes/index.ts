@@ -53,7 +53,7 @@ router.post('/api/sh', function (req, res) {
   )
 
   router.get(
-  '/result-fancy-new',
+  '/api/result-fancy-new',
 
   new FancyController().declarefancyresultnew,
 )
