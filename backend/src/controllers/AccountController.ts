@@ -1378,7 +1378,7 @@ export class AccountController extends ApiController {
 };
 
 
-clinetladger = async (req: Request, res: Response) => {
+clinetladgernew = async (req: Request, res: Response) => {
   try {
     let user = req.user;
     let id = user["_id"];
@@ -1388,6 +1388,40 @@ clinetladger = async (req: Request, res: Response) => {
       ledger.find({ ChildId: id }).lean()
     ]);
 
+    return this.success(res, [ldata, ddata]);
+
+  } catch (error) {
+    return this.fail(res, error);
+  }
+};
+
+clinetladger = async (req: Request, res: Response) => {
+  try {
+    let user = req.user;
+    let id = user["_id"];
+
+    // 🔥 pagination params (default page = 1)
+    const page = Number(req.query.page) || 1;
+    const limit = 1000;
+    const skip = (page - 1) * limit;
+
+    const [ldata, ddata] = await Promise.all([
+      ledger
+        .find({ ParentId: id })
+        .sort({ createdAt: -1 }) // latest first (important for ledger)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+
+      ledger
+        .find({ ChildId: id })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+    ]);
+
+    // 🔥 SAME RESPONSE (no change)
     return this.success(res, [ldata, ddata]);
 
   } catch (error) {
