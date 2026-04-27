@@ -938,16 +938,19 @@ export class AccountController extends ApiController {
   // };
 
 
-  getAccountStmtList = async (req: Request, res: Response) => {
+getAccountStmtList = async (req: Request, res: Response) => {
   try {
-    const { page }: any = req.query
-    const { startDate, endDate, reportType, userId }: any = req.body
+    const { page = 1 }: any = req.query;
+    const limit = 50;
+    const skip = (Number(page) - 1) * limit;
 
-    const user: any = req.user
+    const { startDate, endDate, reportType, userId }: any = req.body;
+
+    const user: any = req.user;
 
     const userid = userId
       ? Types.ObjectId(userId)
-      : Types.ObjectId(user._id)
+      : Types.ObjectId(user._id);
 
     let filter: any = {
       userId: userid,
@@ -955,155 +958,147 @@ export class AccountController extends ApiController {
         $gte: new Date(`${startDate} 00:00:00`),
         $lte: new Date(`${endDate} 23:59:59`),
       },
+    };
+
+    if (reportType === "game") {
+      filter.betId = { $ne: null };
     }
 
-    if (reportType === 'game') {
-      filter.betId = { $ne: null }
-    }
-
-    if (reportType === 'chip') {
-      filter.betId = null
+    if (reportType === "chip") {
+      filter.betId = null;
     }
 
     const aggregateFilter: any[] = [
       { $match: filter },
 
-      // betId → ObjectId
       {
         $addFields: {
           convertedId: {
             $cond: [
-              { $and: [{ $ne: ['$betId', null] }, { $ne: ['$betId', ''] }] },
-              { $toObjectId: '$betId' },
+              { $and: [{ $ne: ["$betId", null] }, { $ne: ["$betId", ""] }] },
+              { $toObjectId: "$betId" },
               null,
             ],
           },
         },
       },
 
-      // 🔹 NORMAL BETS (sportId != 900)
+      // 🔹 NORMAL BETS
       {
         $lookup: {
-          from: 'bets',
-          let: { betId: '$convertedId', sportId: '$sportId' },
+          from: "bets",
+          let: { betId: "$convertedId", sportId: "$sportId" },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ['$_id', '$$betId'] },
-                    { $ne: ['$$sportId', 900] },
+                    { $eq: ["$_id", "$$betId"] },
+                    { $ne: ["$$sportId", 900] },
                   ],
                 },
               },
             },
           ],
-          as: 'normalBet',
+          as: "normalBet",
         },
       },
 
-      // 🔹 MATKA BETS (sportId = 900)
+      // 🔹 MATKA BETS
       {
         $lookup: {
-          from: 'matkabets',
-          let: { betId: '$convertedId', sportId: '$sportId' },
+          from: "matkabets",
+          let: { betId: "$convertedId", sportId: "$sportId" },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ['$_id', '$$betId'] },
-                    { $eq: ['$$sportId', 900] },
+                    { $eq: ["$_id", "$$betId"] },
+                    { $eq: ["$$sportId", 900] },
                   ],
                 },
               },
             },
           ],
-          as: 'matkaBet',
+          as: "matkaBet",
         },
       },
 
-      // 🔹 Select correct bet
       {
         $addFields: {
           result: {
             $cond: [
-              { $eq: ['$sportId', 900] },
-              { $arrayElemAt: ['$matkaBet', 0] },
-              { $arrayElemAt: ['$normalBet', 0] },
+              { $eq: ["$sportId", 900] },
+              { $arrayElemAt: ["$matkaBet", 0] },
+              { $arrayElemAt: ["$normalBet", 0] },
             ],
           },
         },
       },
 
-      // 🔹 roundid for Matka
       {
         $addFields: {
           roundKey: {
             $cond: [
-              { $eq: ['$sportId', 900] },
-              '$result.roundid',
+              { $eq: ["$sportId", 900] },
+              "$result.roundid",
               null,
             ],
           },
         },
       },
 
-      // 🔹 BALANCE
       {
         $lookup: {
-          from: 'balances',
-          localField: 'userId',
-          foreignField: 'userId',
-          as: 'balanceData',
+          from: "balances",
+          localField: "userId",
+          foreignField: "userId",
+          as: "balanceData",
         },
       },
       {
         $unwind: {
-          path: '$balanceData',
+          path: "$balanceData",
           preserveNullAndEmptyArrays: true,
         },
       },
 
-      // 🔹 FACET
+      // 🔥 EXISTING FACET (UNCHANGED)
       {
         $facet: {
           nonNullSelections: [
             { $match: { convertedId: { $ne: null } } },
-
             {
               $group: {
                 _id: {
                   $cond: [
-                    // ✅ MATKA → roundid wise
-                    { $eq: ['$sportId', 900] },
-                    { roundId: '$roundKey' },
-
-                    // ✅ NORMAL → match + market
+                    { $eq: ["$sportId", 900] },
+                    { roundId: "$roundKey" },
                     {
-                      matchId: '$matchId',
+                      matchId: "$matchId",
                       marketId: {
-                        $ifNull: ['$result.marketId', '$result.marketid'],
+                        $ifNull: [
+                          "$result.marketId",
+                          "$result.marketid",
+                        ],
                       },
                     },
                   ],
                 },
-
-                userId: { $first: '$userId' },
-                sportId: { $first: '$sportId' },
-                roundId: { $first: '$roundKey' },
-                matchId: { $first: '$matchId' },
-
-                amount: { $sum: '$amount' },
-                txnType: { $first: '$txnType' },
-                txnBy: { $first: '$txnBy' },
-                openBal: { $first: '$openBal' },
-                narration: { $first: '$narration' },
-                createdAt: { $first: '$createdAt' },
-                type: { $first: '$type' },
-                balance: { $first: '$balanceData.balance' },
-
-                allBets: { $push: '$$ROOT' },
+                userId: { $first: "$userId" },
+                sportId: { $first: "$sportId" },
+                roundId: { $first: "$roundKey" },
+                matchId: { $first: "$matchId" },
+                amount: { $sum: "$amount" },
+                txnType: { $first: "$txnType" },
+                txnBy: { $first: "$txnBy" },
+                openBal: { $first: "$openBal" },
+                narration: { $first: "$narration" },
+                createdAt: { $first: "$createdAt" },
+                type: { $first: "$type" },
+                balance: { $first: "$balanceData.balance" },
+                allBets: { $push: "$$ROOT" },
               },
             },
           ],
@@ -1112,7 +1107,7 @@ export class AccountController extends ApiController {
             { $match: { convertedId: null } },
             {
               $addFields: {
-                balance: '$balanceData.balance',
+                balance: "$balanceData.balance",
               },
             },
           ],
@@ -1122,18 +1117,31 @@ export class AccountController extends ApiController {
       {
         $project: {
           data: {
-            $concatArrays: ['$nonNullSelections', '$nullSelections'],
+            $concatArrays: ["$nonNullSelections", "$nullSelections"],
           },
         },
       },
-      { $unwind: '$data' },
-      { $replaceRoot: { newRoot: '$data' } },
+      { $unwind: "$data" },
+      { $replaceRoot: { newRoot: "$data" } },
+
+      // 🔥 SORT
       { $sort: { createdAt: 1 } },
-    ]
 
-    const accountStatement = await AccoutStatement.aggregate(aggregateFilter)
+      // ✅ PAGINATION (SAFE)
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [{ $skip: skip }, { $limit: limit }],
+        },
+      },
+    ];
 
-    // 🔹 OPENING BALANCE
+    const result = await AccoutStatement.aggregate(aggregateFilter);
+
+    const items = result[0]?.data || [];
+    const total = result[0]?.metadata[0]?.total || 0;
+
+    // 🔹 OPENING BALANCE (UNCHANGED)
     const openingBalance = await AccoutStatement.aggregate([
       {
         $match: {
@@ -1146,19 +1154,22 @@ export class AccountController extends ApiController {
       {
         $group: {
           _id: null,
-          total: { $sum: '$amount' },
+          total: { $sum: "$amount" },
         },
       },
-    ])
+    ]);
 
     return this.success(res, {
-      items: accountStatement,
+      items,
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / limit),
       openingBalance: openingBalance?.[0]?.total || 0,
-    })
+    });
   } catch (e: any) {
-    return this.fail(res, e)
+    return this.fail(res, e);
   }
-}
+};
 
 
 
