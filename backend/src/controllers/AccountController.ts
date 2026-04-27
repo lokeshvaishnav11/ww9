@@ -945,7 +945,6 @@ getAccountStmtList = async (req: Request, res: Response) => {
     const skip = (Number(page) - 1) * limit;
 
     const { startDate, endDate, reportType, userId }: any = req.body;
-
     const user: any = req.user;
 
     const userid = userId
@@ -960,13 +959,8 @@ getAccountStmtList = async (req: Request, res: Response) => {
       },
     };
 
-    if (reportType === "game") {
-      filter.betId = { $ne: null };
-    }
-
-    if (reportType === "chip") {
-      filter.betId = null;
-    }
+    if (reportType === "game") filter.betId = { $ne: null };
+    if (reportType === "chip") filter.betId = null;
 
     const aggregateFilter: any[] = [
       { $match: filter },
@@ -983,44 +977,19 @@ getAccountStmtList = async (req: Request, res: Response) => {
         },
       },
 
-      // 🔹 NORMAL BETS
       {
         $lookup: {
           from: "bets",
-          let: { betId: "$convertedId", sportId: "$sportId" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$betId"] },
-                    { $ne: ["$$sportId", 900] },
-                  ],
-                },
-              },
-            },
-          ],
+          localField: "convertedId",
+          foreignField: "_id",
           as: "normalBet",
         },
       },
-
-      // 🔹 MATKA BETS
       {
         $lookup: {
           from: "matkabets",
-          let: { betId: "$convertedId", sportId: "$sportId" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ["$_id", "$$betId"] },
-                    { $eq: ["$$sportId", 900] },
-                  ],
-                },
-              },
-            },
-          ],
+          localField: "convertedId",
+          foreignField: "_id",
           as: "matkaBet",
         },
       },
@@ -1064,7 +1033,7 @@ getAccountStmtList = async (req: Request, res: Response) => {
         },
       },
 
-      // 🔥 EXISTING FACET (UNCHANGED)
+      // 🔥 GROUP (same logic)
       {
         $facet: {
           nonNullSelections: [
@@ -1095,7 +1064,7 @@ getAccountStmtList = async (req: Request, res: Response) => {
                 txnBy: { $first: "$txnBy" },
                 openBal: { $first: "$openBal" },
                 narration: { $first: "$narration" },
-                createdAt: { $first: "$createdAt" },
+                createdAt: { $max: "$createdAt" }, // ✅ important fix
                 type: { $first: "$type" },
                 balance: { $first: "$balanceData.balance" },
                 allBets: { $push: "$$ROOT" },
@@ -1121,13 +1090,14 @@ getAccountStmtList = async (req: Request, res: Response) => {
           },
         },
       },
+
       { $unwind: "$data" },
       { $replaceRoot: { newRoot: "$data" } },
 
       // 🔥 SORT
       { $sort: { createdAt: 1 } },
 
-      // ✅ PAGINATION (SAFE)
+      // 🔥 FINAL PAGINATION
       {
         $facet: {
           metadata: [{ $count: "total" }],
@@ -1136,12 +1106,14 @@ getAccountStmtList = async (req: Request, res: Response) => {
       },
     ];
 
+    // ✅ EXECUTE AGGREGATE
     const result = await AccoutStatement.aggregate(aggregateFilter);
 
+    // ✅ FIX RESPONSE STRUCTURE
     const items = result[0]?.data || [];
-    const total = result[0]?.metadata[0]?.total || 0;
+    const total = result[0]?.metadata?.[0]?.total || 0;
 
-    // 🔹 OPENING BALANCE (UNCHANGED)
+    // 🔹 OPENING BALANCE
     const openingBalance = await AccoutStatement.aggregate([
       {
         $match: {
@@ -1160,7 +1132,7 @@ getAccountStmtList = async (req: Request, res: Response) => {
     ]);
 
     return this.success(res, {
-      items,
+      items, // ✅ now clean array
       total,
       page: Number(page),
       totalPages: Math.ceil(total / limit),
