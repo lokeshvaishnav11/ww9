@@ -4211,6 +4211,44 @@ alluserbetList22 = async (req: Request, res: Response): Promise<Response> => {
     }
   }
 
+    updateBet = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { betId, isBack, odds } = req.body
+
+    if (!betId) {
+      return this.fail(res, "betId required")
+    }
+
+    const updatedBet: any = await Bet.findOneAndUpdate(
+      { _id: ObjectId(betId) },
+      {
+        $set: {
+          isBack: isBack,
+          odds: odds,
+        },
+      },
+      { new: true } // 🔥 updated data return karega
+    )
+
+    if (!updatedBet) {
+      return this.fail(res, "Bet not found")
+    }
+
+    // 🔥 OPTIONAL (agar pnl / loss recalc karna ho)
+    // const betAmount = parseFloat(updatedBet?.loss?.toString() || "0")
+
+    // 🔥 exposer recalc (same tera logic)
+    // const json: any = {}
+    // await this.getexposerfunction({ _id: updatedBet.userId }, true, json)
+    // await this.getcasinoexposerfunction({ _id: updatedBet.userId }, true, json)
+
+    return this.success(res, "Bet updated successfully")
+  } catch (e: any) {
+    console.log(e)
+    return this.fail(res, e)
+  }
+}
+
   deleteBets = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { ids } = req.body;
