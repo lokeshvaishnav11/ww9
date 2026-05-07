@@ -4225,6 +4225,7 @@ alluserbetList22 = async (req: Request, res: Response): Promise<Response> => {
         $set: {
           isBack: isBack,
           // odds: odds,
+          isc:"y",
         },
       },
       { new: true } // 🔥 updated data return karega
