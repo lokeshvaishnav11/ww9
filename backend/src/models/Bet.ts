@@ -60,6 +60,7 @@ interface IBet {
   fancystatus?:string
   result?:any
   rmid:number
+  isc?:string
 }
 
 interface IBetModel extends IBet, Document {}
@@ -104,6 +105,8 @@ const BetSchema = new Schema(
     C3: String,
     fancystatus: String,
     rmid:Number,
+    isc: { type: String, default: 'N'},
+
   },
   {
     timestamps: true,
