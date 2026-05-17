@@ -42,16 +42,22 @@ const Newhome = () => {
                 </a>
               </div>
 
-              {/* <div className="col-md-6 col-6 text-center menu-list-item">
-                <a href="/">
-                  <img src="/imgs/av180x180.png" />{" "}
-                  <br /> Aviator(coming soon)k{" "}
+              <div className="col-md-6 col-6 text-center menu-list-item">
+                <a href="https://punjabguru.com/">
+                  <img src="/imgs/moregames.webp" style={{ borderRadius: "50%" }} />{" "}
+                  <br /> More Games{" "}
                 </a>
-              </div> */}
-               <div className="col-md-6 col-6 text-center menu-list-item">
+              </div>
+              <div className="col-md-6 col-6 text-center menu-list-item">
                 <a href="/accountstatement">
                   <img src="/imgs/statements.png" />{" "}
                   <br /> Statement{" "}
+                </a>
+              </div>
+               <div className="col-md-6 col-6 text-center menu-list-item">
+                <a href="/complete-games">
+                  <img src="/imgs/CG1.png" />{" "}
+                  <br /> Complete Games{" "}
                 </a>
               </div>
             </div>
@@ -63,13 +69,20 @@ const Newhome = () => {
                   My Ledger
                 </a>
               </div>
-              <div className="col-md-6 col-6 text-center menu-list-item">
+              {/* <div className="col-md-6 col-6 text-center menu-list-item">
                 <a href="/complete-games">
                   <img src="/imgs/CG1.png" />{" "}
                   <br /> Complete Games{" "}
                 </a>
+              </div> */}
+
+              <div className="col text-center menu-list-item">
+                <a href="/profile">
+                  <img src="/imgs/Profile.png" />{" "}
+                  <br /> My Profile{" "}
+                </a>
               </div>
-             
+
             </div>
             <div className="row">
               <div className="col-md-6 col-6 text-center menu-list-item">
@@ -79,47 +92,53 @@ const Newhome = () => {
                 </a>
               </div>
 
-              <div className="col text-center menu-list-item">
+              {/* <div className="col text-center menu-list-item">
                 <a href="/profile">
                   <img src="/imgs/Profile.png" />{" "}
                   <br /> My Profile{" "}
                 </a>
+              </div> */}
+
+              <div className="col text-center menu-list-item">
+                <div onClick={handleClick}>
+                  <img src="/imgs/kabaddi-img.png" />{" "}
+                  <br /> Kabbadi{" "}
+
+                </div>
               </div>
 
 
-              
-            
             </div>
 
 
 
-             <div className="row">
-             
+            <div className="row">
 
 
-              
-            
-           
 
-             <div className="col text-center menu-list-item">
-                <div  onClick={handleClick}>
+
+
+
+
+              <div className="col text-center menu-list-item">
+                <div onClick={handleClick}>
                   <img src="/imgs/ludo-9xpro.png" />{" "}
                   <br /> Ludo{" "}
-                   
+
                 </div>
               </div>
 
-
-               <div className="col text-center menu-list-item">
-                <div  onClick={handleClick}>
+{/* 
+              <div className="col text-center menu-list-item">
+                <div onClick={handleClick}>
                   <img src="/imgs/kabaddi-img.png" />{" "}
                   <br /> Kabbadi{" "}
-               
-                </div>
-              </div>
 
-               </div>
-          
+                </div>
+              </div> */}
+
+            </div>
+
           </div>
         </div>
       </div>
