@@ -43,7 +43,7 @@ const Newhome = () => {
               </div>
 
               <div className="col-md-6 col-6 text-center menu-list-item">
-                <a href="https://punjabguru.com/">
+                <a href="https://punjabguru.online/">
                   <img src="/imgs/moregames.webp" style={{ borderRadius: "50%" }} />{" "}
                   <br /> More Games{" "}
                 </a>
