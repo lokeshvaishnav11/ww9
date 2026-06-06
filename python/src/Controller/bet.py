@@ -1827,7 +1827,7 @@ def checkMaxlimit(payload,userInfo):
 
         total_stack = result[0]["totalStack"] if result else 0
 
-        if payload['betOn'] == "CASINO" and total_stack+payload['stack'] > 50000:
+        if payload['betOn'] == "CASINO" and total_stack+payload['stack'] > 10000:
             return {"message": "failed", "notification": "Max Limit completed !"}
         # elif payload['betOn'] == "MATCH_ODDS" and total_stack + payload['stack'] > 500000:
         #     return {"message": "failed", "notification": "Max Limit completed !"}
@@ -2700,10 +2700,10 @@ def getexposerfunctionone(user, update_status, current_bet):
                 fancy_expo += float(sum(abs(val) for val in fancypl.values()))
 
                 if(current_bet['bet_on']== "FANCY"):
-                    if(fancy_expo > 200000):
+                    if(fancy_expo > 50000):
                         return 'ffailed'
                 else:
-                    if(main_expo > 500000):
+                    if(main_expo > 300000):
                         return 'mafailed'      
 
             
