@@ -80,7 +80,7 @@
 //           >
 //             <h4 className="text-center" style={{ color: "#11283E" }}>
 //               <div className="log-logo m-b-20 text-center">
-//                 <img src="/imgs/logo.png" className="logo-login" />
+//                 <img src="/imgs/9xh.png" className="logo-login" />
 //               </div>
 //             </h4>
 //             <form
@@ -292,7 +292,7 @@ const Login = () => {
             }}
           >
             <div className="log-logo m-b-20 text-center">
-              <img src="/imgs/logo.png" className="logo-login" />
+              <img src="/imgs/9xh.png" className="logo-login" />
             </div>
 
             <form onSubmit={handleSubmit} autoComplete="off">

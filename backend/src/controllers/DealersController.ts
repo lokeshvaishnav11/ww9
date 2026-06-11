@@ -462,7 +462,7 @@ export class DealersController extends ApiController {
       //   json: () => res, // dummy implementation for json
       // }
 
-      await axios.post("https://api.11wickets.pro/api/user-account-balance", {
+      await axios.post("https://api.9xpro.pro/api/user-account-balance", {
         userId: newUser._id,
         parentUserId: parentUser._id,
         amount: sendamount,
